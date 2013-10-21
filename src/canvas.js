@@ -1,3 +1,21 @@
+// TODO :
+// Graphics :
+// 0 - Draw the colony
+// 1 - ant must head in the right direction
+// 2 - Proper body circles (correct size)
+
+// Ant :
+// Is empty => No pheromons path created
+// Is carrying => Pheromon creation (+8 on the path)
+// If is Carrying, then, go home (approx heading to the colony)
+// 
+// Path :
+// Store and render a pheromon path. All path must be kept (+8 points, every second, loose 1 point each second for instance).
+// If one a track carrying => +8 again.
+// 
+// Render tracks : RGB value modified by pheromons qty
+
+
 //get a reference to the canvas
 
 $(document).ready(function(){
