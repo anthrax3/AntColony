@@ -46,7 +46,7 @@ $(document).ready(function(){
   */
 //BEGIN LIBRARY CODE
   
-  var NB_ANTS = 50;
+  var NB_ANTS = 500;
   var NB_FOODS = 10;
   var NB_OBSTACLES = 10;
   
@@ -58,6 +58,9 @@ $(document).ready(function(){
   var ABDOMEN_SIZE = 2;
   var FOOD_SIZE = 10;
   var ROCK_SIZE = 20;
+  
+  var MIN_SPEED = 0.5;
+  var MAX_SPEED = 5;
   
   var ants = [];
   var foodReserves = [];
@@ -93,7 +96,7 @@ $(document).ready(function(){
     this.y = Math.random() * HEIGHT*0.90;
     this.dx = Math.random() * 4 - 2;
     this.dy = Math.random() * 4 - 2;
-    this.speed = Math.random() * 1 + 1;
+    this.speed = Math.random() * 1 + MAX_SPEED;
     
     this.heading = Math.atan(this.dy / this.dx );
     
@@ -131,10 +134,16 @@ $(document).ready(function(){
       
       // Ants Collision
       for (var i = 0 ; i < ants.length ; i++ ) {
-        if ( this.x < ants[i].x && this.x + this.dx + BALL_SIZE > ants[i].x - BALL_SIZE ) {
-          if ( this.y < ants[i].y && this.y + this.dy + BALL_SIZE > ants[i].y - BALL_SIZE ) {
-            this.dx = this.dx -2; 
-            this.dy = -this.dy; 
+        if (( this.x + this.dx < ants[i].x + ants[i].dx && this.x + this.dx + BALL_SIZE*2 > ants[i].x + ants[i].dx - BALL_SIZE*2 ) ||
+           ( this.x + this.dx > ants[i].x + ants[i].dx && this.x + this.dx - BALL_SIZE*2 < ants[i].x + ants[i].dx + BALL_SIZE*2 ) ) {
+          if (( this.y + this.dy < ants[i].y + ants[i].dy && this.y + this.dy + BALL_SIZE > ants[i].y + ants[i].dy - BALL_SIZE ) || 
+              ( this.y + this.dy > ants[i].y + ants[i].dy && this.y + this.dy - BALL_SIZE < ants[i].y + ants[i].dy + BALL_SIZE ) ) {
+            
+            //this.dx = -((this.dx > 0) ? this.dx - 1 : this.dx + 1); 
+            //this.dy = -((this.dy > 0) ? this.dy - 1 : this.dy + 1);
+            this.dx = -this.dx;
+            this.dy = -this.dy;
+            this.speed = MIN_SPEED;
           }
         }
       }
@@ -183,11 +192,12 @@ $(document).ready(function(){
             this.dx = -this.dx; 
             this.dy = -this.dy; 
           }
-  
         }
       }
       
-
+      if ( this.speed < MAX_SPEED )
+         this.speed+=0.1;
+      
       this.x += this.dx * this.speed;
       this.y += this.dy * this.speed;
       
