@@ -1,12 +1,9 @@
-// TODO :
 // Graphics :
 // 0 - Draw the colony => DONE
 // 1 - ant must head in the right direction => DONE
 // 2 - Proper body circles (correct size) => Done
 
-// 3 - Collision detection => Change direction if obstacle in front + test if obstacle == food.
-
-
+// TODO - 3 - Collision detection => Change direction if obstacle in front + test if obstacle == food.
 
 // Ant :
 // Is empty => No pheromons path created
@@ -21,7 +18,6 @@
 
 
 //get a reference to the canvas
-
 $(document).ready(function(){
   var ctx = $('#canvas')[0].getContext("2d");
 /*
@@ -59,7 +55,7 @@ $(document).ready(function(){
   var FOOD_SIZE = 10;
   var ROCK_SIZE = 20;
   
-  var MIN_SPEED = 0.5;
+  var MIN_SPEED = 0.0;
   var MAX_SPEED = 5;
   
   var ants = [];
@@ -71,8 +67,7 @@ $(document).ready(function(){
   
   var WIDTH;
   var HEIGHT;
-  var ctx;
-  
+
   var Colony = function() {
     this.x = Math.random() * WIDTH / 2;
     this.y = Math.random() * HEIGHT / 2;
@@ -96,7 +91,7 @@ $(document).ready(function(){
     this.y = Math.random() * HEIGHT*0.90;
     this.dx = Math.random() * 4 - 2;
     this.dy = Math.random() * 4 - 2;
-    this.speed = Math.random() * 1 + MAX_SPEED;
+    this.speed = Math.random() + MAX_SPEED;
     
     this.heading = Math.atan(this.dy / this.dx );
     
@@ -114,7 +109,7 @@ $(document).ready(function(){
       circle(this.x+HEAD_SIZE+TORSO_SIZE, this.y, MIDDLE_SIZE);
       circle(this.x+HEAD_SIZE+TORSO_SIZE+MIDDLE_SIZE, this.y, ABDOMEN_SIZE);
       
-      this.angle += this.dAngle;
+      //this.angle += this.dAngle;
       
       ctx.restore();
     };
@@ -131,9 +126,10 @@ $(document).ready(function(){
       {
         this.dy = -this.dy;
       }
-      
+
+      var i;
       // Ants Collision
-      for (var i = 0 ; i < ants.length ; i++ ) {
+      for ( i = 0 ; i < ants.length ; i++ ) {
         if (( this.x + this.dx < ants[i].x + ants[i].dx && this.x + this.dx + BALL_SIZE*2 > ants[i].x + ants[i].dx - BALL_SIZE*2 ) ||
            ( this.x + this.dx > ants[i].x + ants[i].dx && this.x + this.dx - BALL_SIZE*2 < ants[i].x + ants[i].dx + BALL_SIZE*2 ) ) {
           if (( this.y + this.dy < ants[i].y + ants[i].dy && this.y + this.dy + BALL_SIZE > ants[i].y + ants[i].dy - BALL_SIZE ) || 
@@ -152,18 +148,20 @@ $(document).ready(function(){
       if ( (this.x + this.dx < colony.x && this.x + this.dx + BALL_SIZE > colony.x - BLOCK_SIZE*2) ||
            (this.x + this.dx > colony.x && this.x + this.dx - BALL_SIZE < colony.x + BLOCK_SIZE*2) ) {
         if ( this.y + this.dy < colony.y && this.y + this.dy + BALL_SIZE > colony.y - BLOCK_SIZE*2 ) {
+          this.speed = MIN_SPEED;
           this.dx = -this.dx; 
           this.dy = -this.dy; 
         }
         else if ( this.y + this.dy > colony.y && this.y + this.dy - BALL_SIZE < colony.y + BLOCK_SIZE ) {
-          this.dx = -this.dx; 
+          this.speed = MIN_SPEED;
+          this.dx = -this.dx;
           this.dy = -this.dy; 
         }
 
       }
           
       // obstacles collision
-      for ( var i = 0 ; i < obstacles.length ; i++ ) {
+      for ( i = 0 ; i < obstacles.length ; i++ ) {
          
         if ( (this.x + this.dx < obstacles[i].x && this.x + this.dx + BALL_SIZE > obstacles[i].x - ROCK_SIZE) ||
              (this.x + this.dx > obstacles[i].x && this.x + this.dx - BALL_SIZE < obstacles[i].x + ROCK_SIZE) ) {
@@ -180,7 +178,7 @@ $(document).ready(function(){
       }
 
       // Food collision
-      for ( var i = 0 ; i < foodReserves.length ; i++ ) {
+      for ( i = 0 ; i < foodReserves.length ; i++ ) {
          
         if ( (this.x + this.dx < foodReserves[i].x && this.x + this.dx + BALL_SIZE > foodReserves[i].x - FOOD_SIZE) ||
              (this.x + this.dx > foodReserves[i].x && this.x + this.dx - BALL_SIZE < foodReserves[i].x + FOOD_SIZE) ) {
@@ -236,18 +234,21 @@ $(document).ready(function(){
     ctx = $('#canvas')[0].getContext("2d");
     ctx.canvas.width  = window.innerWidth/2;
     ctx.canvas.height = window.innerHeight/2;
-    WIDTH = $("#canvas").width();
-    HEIGHT = $("#canvas").height();
-    
-    for ( var i = 0 ; i < NB_ANTS ; i++ ) {
+    canvas = $("#canvas");
+
+    WIDTH = canvas.width();
+    HEIGHT = canvas.height();
+
+    var i;
+    for ( i = 0 ; i < NB_ANTS ; i++ ) {
       ants.push(new Ant());
     }
     
-    for ( var i = 0 ; i < NB_FOODS ; i++ ) {
+    for ( i = 0 ; i < NB_FOODS ; i++ ) {
       foodReserves.push(new FoodReserve());
     }
 
-    for ( var i = 0 ; i < NB_OBSTACLES ; i++ ) {
+    for ( i = 0 ; i < NB_OBSTACLES ; i++ ) {
       obstacles.push(new Rock());
     }
     colony = new Colony();
@@ -262,13 +263,14 @@ $(document).ready(function(){
     ctx.closePath();
     ctx.fill();
   }
-   
+
+  /*
   function rect(x,y,w,h) {
     ctx.beginPath();
     ctx.rect(x,y,w,h);
     ctx.closePath();
     ctx.fill();
-  }
+  }*/
    
   function clear() {
     ctx.fillStyle = groundColor;
@@ -284,17 +286,19 @@ $(document).ready(function(){
     clear();
 
     colony.draw();
-    
-    for ( var i = 0 ; i < ants.length ; i++ ) {
+
+    var i;
+
+    for ( i = 0 ; i < ants.length ; i++ ) {
       ants[i].update();
       ants[i].draw();
     }
     
-    for ( var i = 0 ; i < foodReserves.length ; i++ ) {
+    for ( i = 0 ; i < foodReserves.length ; i++ ) {
       foodReserves[i].draw();
     }
 
-    for ( var i = 0 ; i < obstacles.length ; i++ ) {
+    for ( i = 0 ; i < obstacles.length ; i++ ) {
       obstacles[i].draw();
     }
    
