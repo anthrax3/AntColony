@@ -27,29 +27,8 @@ $(document).ready(function () {
       ctx.closePath();
       ctx.fill();
     },
-/*
-  ctx.fillStyle = "#00A308";
-  ctx.beginPath();
-  ctx.arc(220, 220, 50, 0, Math.PI*2, true);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "#FF1C0A";
-  ctx.beginPath();
-  ctx.arc(100, 100, 100, 0, Math.PI*2, true);
-  ctx.closePath();
-  ctx.fill();
-
-  //the rectangle is half transparent
-  ctx.fillStyle = "rgba(255, 255, 0, .5)"
-  ctx.beginPath();
-  ctx.rect(15, 150, 120, 120);
-  ctx.closePath();
-  ctx.fill();
-  */
 //BEGIN LIBRARY CODE
-
-    NB_ANTS = 500,
+    NB_ANTS = 50,
     NB_FOODS = 10,
     NB_OBSTACLES = 10,
     BLOCK_SIZE = 25,
@@ -98,16 +77,18 @@ $(document).ready(function () {
       this.dx = Math.random() * 4 - 2;
       this.dy = Math.random() * 4 - 2;
       this.speed = Math.random() + MAX_SPEED;
-
       this.heading = Math.atan(this.dy / this.dx);
+      this.collide = false;
+      this.antLength = (HEAD_SIZE + TORSO_SIZE + MIDDLE_SIZE)/2;
+      this.antWidth = (MIDDLE_SIZE)/2;
 
       this.color = antsColor[Math.floor((Math.random() * 3))];
 
       this.draw = function () {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + this.antLength, this.y + this.antWidth);
         ctx.rotate(this.heading);
-        ctx.translate(-this.x, -this.y);
+        ctx.translate(-this.x - this.antLength, -this.y - this.antWidth);
 
         ctx.fillStyle = this.color;
         circle(this.x, this.y, HEAD_SIZE);
@@ -121,7 +102,7 @@ $(document).ready(function () {
       };
 
       this.update = function () {
-        var collide = false;
+        this.collide = false;
         // Border collision
         if (this.x + this.dx + BALL_SIZE > WIDTH || this.x + this.dx - BALL_SIZE < 0) {
           this.dx = -this.dx;
@@ -137,43 +118,40 @@ $(document).ready(function () {
               (this.x + this.dx > ants[i].x + ants[i].dx && this.x + this.dx - BALL_SIZE * 2 < ants[i].x + ants[i].dx + BALL_SIZE * 2)) {
             if ((this.y + this.dy < ants[i].y + ants[i].dy && this.y + this.dy + BALL_SIZE > ants[i].y + ants[i].dy - BALL_SIZE) ||
                 (this.y + this.dy > ants[i].y + ants[i].dy && this.y + this.dy - BALL_SIZE < ants[i].y + ants[i].dy + BALL_SIZE)) {
-
-              //this.dx = -((this.dx > 0) ? this.dx - 1 : this.dx + 1);
-              //this.dy = -((this.dy > 0) ? this.dy - 1 : this.dy + 1);
               this.dx = -this.dx;
               this.dy = -this.dy;
-              collide = true;
+//              this.collide = true;
             }
           }
         }
 
         // Colony collision
-        if ((this.x + this.dx < colony.x && this.x + this.dx + BALL_SIZE > colony.x - BLOCK_SIZE * 2) ||
-             (this.x + this.dx > colony.x && this.x + this.dx - BALL_SIZE < colony.x + BLOCK_SIZE * 2)) {
-          if (this.y + this.dy < colony.y && this.y + this.dy + BALL_SIZE > colony.y - BLOCK_SIZE * 2) {
-            collide = true;
-            this.dx = -this.dx;
-            this.dy = -this.dy;
-          } else if (this.y + this.dy > colony.y && this.y + this.dy - BALL_SIZE < colony.y + BLOCK_SIZE) {
-            collide = true;
-            this.dx = -this.dx;
-            this.dy = -this.dy;
+        if ((this.x + this.dx < colony.x && this.x + this.dx + this.antLength > colony.x - BLOCK_SIZE * 2) ||
+             (this.x + this.dx > colony.x && this.x + this.dx - this.antLength < colony.x + BLOCK_SIZE * 2)) {
+          if (this.y + this.dy < colony.y && this.y + this.dy + this.antWidth > colony.y - BLOCK_SIZE * 2) {
+            this.collide = true;
+          } else if (this.y + this.dy > colony.y && this.y + this.dy - this.antWidth < colony.y + BLOCK_SIZE) {
+            this.collide = true;
           }
         }
 
         // obstacles collision
         for (i = 0; i < obstacles.length; i++) {
 
-          if ((this.x + this.dx < obstacles[i].x && this.x + this.dx + BALL_SIZE > obstacles[i].x - ROCK_SIZE) ||
-               (this.x + this.dx > obstacles[i].x && this.x + this.dx - BALL_SIZE < obstacles[i].x + ROCK_SIZE)) {
-            if (this.y + this.dy < obstacles[i].y && this.y + this.dy + BALL_SIZE > obstacles[i].y - ROCK_SIZE) {
-              collide = true;
+          if ((this.x + this.dx < obstacles[i].x && this.x + this.dx + this.antLength > obstacles[i].x - ROCK_SIZE) ||
+               (this.x + this.dx > obstacles[i].x && this.x + this.dx - this.antLength < obstacles[i].x + ROCK_SIZE)) {
+            if (this.y + this.dy < obstacles[i].y && this.y + this.dy + this.antWidth > obstacles[i].y - ROCK_SIZE) {
+              this.collide = true;
+/*
               this.dx = -this.dx;
               this.dy = -this.dy;
-            } else if (this.y + this.dy > obstacles[i].y && this.y + this.dy - BALL_SIZE < obstacles[i].y + ROCK_SIZE) {
-              collide = true;
+*/
+            } else if (this.y + this.dy > obstacles[i].y && this.y + this.dy - this.antWidth < obstacles[i].y + ROCK_SIZE) {
+              this.collide = true;
+/*
               this.dx = -this.dx;
               this.dy = -this.dy;
+*/
             }
 
           }
@@ -182,32 +160,35 @@ $(document).ready(function () {
         // Food collision
         for (i = 0; i < foodReserves.length; i++) {
 
-          if ((this.x + this.dx < foodReserves[i].x && this.x + this.dx + BALL_SIZE > foodReserves[i].x - FOOD_SIZE) ||
-               (this.x + this.dx > foodReserves[i].x && this.x + this.dx - BALL_SIZE < foodReserves[i].x + FOOD_SIZE)) {
-            if (this.y + this.dy < foodReserves[i].y && this.y + this.dy + BALL_SIZE > foodReserves[i].y - FOOD_SIZE) {
-              collide = true;
+          if ((this.x + this.dx < foodReserves[i].x && this.x + this.dx + this.antLength > foodReserves[i].x - FOOD_SIZE) ||
+               (this.x + this.dx > foodReserves[i].x && this.x + this.dx - this.antLength < foodReserves[i].x + FOOD_SIZE)) {
+            if (this.y + this.dy < foodReserves[i].y && this.y + this.dy + this.antLength > foodReserves[i].y - FOOD_SIZE) {
+//              this.collide = true;
               this.dx = -this.dx;
               this.dy = -this.dy;
-            } else if (this.y + this.dy > foodReserves[i].y && this.y + this.dy - BALL_SIZE < foodReserves[i].y + FOOD_SIZE) {
-              collide = true;
+            } else if (this.y + this.dy > foodReserves[i].y && this.y + this.dy - this.antLength < foodReserves[i].y + FOOD_SIZE) {
+//              this.collide = true;
               this.dx = -this.dx;
               this.dy = -this.dy;
             }
           }
         }
 
-        if (collide) {
+        // TODO :
+        // problem 2 : should move anyway in order to exit the "obstacle trap"
+        this.heading = Math.atan2(this.dy, this.dx);
+        if (this.collide) {
           this.speed = MIN_SPEED;
+          // change direction by increments
+          this.heading += 0.01;
+          this.dx = Math.cos(this.heading);
+          this.dy = Math.sin(this.heading);
         }
-
         if (this.speed < MAX_SPEED) {
-          this.speed += 0.1;
+          this.speed += 0.05;
         }
-
         this.x += this.dx * this.speed;
         this.y += this.dy * this.speed;
-
-        this.heading = Math.atan(this.dy / this.dx);
 
       };
     },
