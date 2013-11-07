@@ -28,11 +28,11 @@ $(document).ready(function () {
       ctx.fill();
     },
 //BEGIN LIBRARY CODE
-    NB_ANTS = 50,
-    NB_FOODS = 2,
-    NB_OBSTACLES = 4,
+    NB_ANTS = 500,
+    NB_FOODS = 3,
+    NB_OBSTACLES = 3,
     BLOCK_SIZE = 25,
-    BALL_SIZE = 2,
+//    BALL_SIZE = 2,
     HEAD_SIZE = 2,
     TORSO_SIZE = 2,
     MIDDLE_SIZE = 2,
@@ -42,14 +42,14 @@ $(document).ready(function () {
 
     MIN_SPEED = 0.0,
     MAX_SPEED = 2.5,
-    ROTATION_INCREMENT = 0.02,
+    ROTATION_INCREMENT = 0.1,
 
     ants = [],
     foodReserves = [],
     obstacles = [],
     colony,
 
-    antsColor = ["#556622", "#775522", "#553311"],
+    antsColor = ["#556622", "#775522", "#553311", "#DD0000"],
     groundColor = "#081200",
 
     WIDTH,
@@ -82,6 +82,7 @@ $(document).ready(function () {
       this.collide = false;
       this.blocked = false;
       this.blockTime = 0;
+      this.isDead = false;
       this.antLength = (HEAD_SIZE + TORSO_SIZE + MIDDLE_SIZE) / 2;
       this.antWidth = MIDDLE_SIZE / 2;
       this.directionInclination = (Math.random() * 2) - 1 > 0 ? 1 : -1;
@@ -89,24 +90,26 @@ $(document).ready(function () {
       this.color = antsColor[Math.floor((Math.random() * 3))];
 
       this.draw = function () {
-        ctx.save();
-        ctx.translate(this.x + this.antLength, this.y + this.antWidth);
-        ctx.rotate(this.heading);
-        ctx.translate(-this.x - this.antLength, -this.y - this.antWidth);
+        if (!this.isDead) {
+          ctx.save();
+          ctx.translate(this.x + this.antLength, this.y + this.antWidth);
+          ctx.rotate(this.heading);
+          ctx.translate(-this.x - this.antLength, -this.y - this.antWidth);
 
-        ctx.fillStyle = this.color;
-        circle(this.x, this.y, HEAD_SIZE);
-        circle(this.x + HEAD_SIZE, this.y, TORSO_SIZE);
-        circle(this.x + HEAD_SIZE + TORSO_SIZE, this.y, MIDDLE_SIZE);
-        circle(this.x + HEAD_SIZE + TORSO_SIZE + MIDDLE_SIZE, this.y, ABDOMEN_SIZE);
+          ctx.fillStyle = this.color;
+          circle(this.x, this.y, HEAD_SIZE);
+          circle(this.x + HEAD_SIZE, this.y, TORSO_SIZE);
+          circle(this.x + HEAD_SIZE + TORSO_SIZE, this.y, MIDDLE_SIZE);
+          circle(this.x + HEAD_SIZE + TORSO_SIZE + MIDDLE_SIZE, this.y, ABDOMEN_SIZE);
 
-        //this.angle += this.dAngle;
+          //this.angle += this.dAngle;
 
-        ctx.restore();
+          ctx.restore();
+        }
       };
 
-      this.update = function () {
-        // TODO : keep track of last time colliding... so that we can kill the ant if needed
+      this.update = function (time) {
+        // keep track of last time colliding... so that we can kill the ant if needed
         this.collide = false; // this.blocked is not modified.
         // Border collision
         if (this.x + this.dx + this.antLength > WIDTH || this.x + this.dx - this.antLength < 0) {
@@ -117,7 +120,7 @@ $(document).ready(function () {
           this.dy = -this.dy;
         }
 
-        var delta = 3,
+        var delta = 1.5,
           deltaX = this.dx * delta,
           deltaY = this.dy * delta;
 
@@ -177,8 +180,16 @@ $(document).ready(function () {
         } else {
           if (!this.blocked) {
             this.blocked = true;
-            // TODO : keep track of the time the ant started to be blocked.
-            this.blockTime = 0; // todo : modify this.
+            // keep track of the time the ant started to be blocked.
+            this.blockTime = time;
+          } else {
+            // Kill the ant ?
+            console.log("kill ?? " + this.blockTime + ' - ' + time);
+            if (time > this.blockTime + 3000) {
+              this.color = antsColor[3];
+              this.speed = 0;
+              this.isDead = true;
+            }
           }
         }
 
@@ -247,10 +258,11 @@ $(document).ready(function () {
 
     colony.draw();
 
-    var i;
+    var i,
+      simTime = new Date();
 
     for (i = 0; i < ants.length; i++) {
-      ants[i].update();
+      ants[i].update(simTime.getTime());
       ants[i].draw();
     }
 
@@ -285,6 +297,9 @@ $(document).ready(function () {
     }
 
     colony = new Colony();
+
+    // display simulation information
+    $('obstacles').value = 'toto';
 
     return window.setInterval(draw, 10);
   }
