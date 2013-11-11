@@ -28,17 +28,18 @@ $(document).ready(function () {
       ctx.fill();
     },
 //BEGIN LIBRARY CODE
+    MSInterval = 50,
     NB_ANTS = 500,
     NB_FOODS = 3,
-    NB_OBSTACLES = 3,
-    BLOCK_SIZE = 25,
+    NB_OBSTACLES = 5,
+    COLONY_SIZE = 25,
 //    BALL_SIZE = 2,
     HEAD_SIZE = 2,
     TORSO_SIZE = 2,
     MIDDLE_SIZE = 2,
     ABDOMEN_SIZE = 2,
-    FOOD_SIZE = 10,
-    ROCK_SIZE = 20,
+    FOOD_SIZE = 5,
+    ROCK_SIZE = 10,
 
     MIN_SPEED = 0.0,
     MAX_SPEED = 2.5,
@@ -55,19 +56,21 @@ $(document).ready(function () {
     WIDTH,
     HEIGHT,
     i,
+    fps,
+    lastTime,
 
     Colony = function () {
-      this.x = Math.random() * WIDTH / 2;
-      this.y = Math.random() * HEIGHT / 2;
+      this.x = Math.random() * WIDTH / 3;
+      this.y = Math.random() * HEIGHT / 3;
       this.color = "#115511";
 
       this.draw = function () {
         ctx.save();
         ctx.fillStyle = this.color;
-        circle(this.x, this.y, BLOCK_SIZE);
-        circle(this.x + BLOCK_SIZE, this.y, BLOCK_SIZE);
-        circle(this.x - BLOCK_SIZE, this.y, BLOCK_SIZE);
-        circle(this.x, this.y - BLOCK_SIZE, BLOCK_SIZE);
+        circle(this.x, this.y, COLONY_SIZE);
+        circle(this.x + COLONY_SIZE, this.y, COLONY_SIZE);
+        circle(this.x - COLONY_SIZE, this.y, COLONY_SIZE);
+        circle(this.x, this.y - COLONY_SIZE, COLONY_SIZE);
         ctx.restore();
       };
     },
@@ -138,11 +141,11 @@ $(document).ready(function () {
 */
 
         // Colony collision
-        if ((this.x + deltaX < colony.x && this.x + deltaX + this.antLength > colony.x - BLOCK_SIZE * 2) ||
-             (this.x + deltaX > colony.x && this.x + deltaX - this.antLength < colony.x + BLOCK_SIZE * 2)) {
-          if (this.y + deltaY < colony.y && this.y + deltaY + this.antWidth > colony.y - BLOCK_SIZE * 2) {
+        if ((this.x + deltaX < colony.x && this.x + deltaX + this.antLength > colony.x - COLONY_SIZE * 2) ||
+             (this.x + deltaX > colony.x && this.x + deltaX - this.antLength < colony.x + COLONY_SIZE * 2)) {
+          if (this.y + deltaY < colony.y && this.y + deltaY + this.antWidth > colony.y - COLONY_SIZE * 2) {
             this.collide = true;
-          } else if (this.y + deltaY > colony.y && this.y + deltaY - this.antWidth < colony.y + BLOCK_SIZE) {
+          } else if (this.y + deltaY > colony.y && this.y + deltaY - this.antWidth < colony.y + COLONY_SIZE) {
             this.collide = true;
           }
         }
@@ -184,7 +187,7 @@ $(document).ready(function () {
             this.blockTime = time;
           } else {
             // Kill the ant ?
-            console.log("kill ?? " + this.blockTime + ' - ' + time);
+//            console.log("kill ?? " + this.blockTime + ' - ' + time);
             if (time > this.blockTime + 3000) {
               this.color = antsColor[3];
               this.speed = 0;
@@ -221,8 +224,8 @@ $(document).ready(function () {
     },
 
     FoodReserve = function () {
-      this.x = Math.random() * WIDTH * 0.85;
-      this.y = Math.random() * HEIGHT * 0.85;
+      this.x = Math.random() * WIDTH / 3 + 2 * WIDTH / 3;
+      this.y = Math.random() * HEIGHT / 2 + HEIGHT / 2;
       this.color = "#CC3333";
 
       this.draw = function () {
@@ -234,8 +237,8 @@ $(document).ready(function () {
     },
 
     Rock = function () {
-      this.x = Math.random() * WIDTH * 0.85;
-      this.y = Math.random() * HEIGHT * 0.85;
+      this.x = Math.random() * WIDTH / 2 + WIDTH / 4;
+      this.y = Math.random() * HEIGHT * 0.95;
       this.color = "#BBBBBB";
 
       this.draw = function () {
@@ -254,12 +257,26 @@ $(document).ready(function () {
   }
 
   function draw() {
+    // Calculate framerate and adjust it if necessary
+    var i,
+      simTime = new Date(),
+      len;
+
+    fps = 1000 / (simTime - lastTime);
+    lastTime = simTime;
+
     clear();
 
     colony.draw();
 
-    var i,
-      simTime = new Date();
+
+    // Remove dead ants
+    len = ants.length;
+    while (len--) {
+      if (ants[len].isDead) {
+        ants.splice(len, 1);
+      }
+    }
 
     for (i = 0; i < ants.length; i++) {
       ants[i].update(simTime.getTime());
@@ -273,6 +290,11 @@ $(document).ready(function () {
     for (i = 0; i < obstacles.length; i++) {
       obstacles[i].draw();
     }
+
+    $('#nbAnts').text(ants.length);
+    $('#FPS').text(Math.round(fps));
+
+
   }
 
   function init() {
@@ -299,9 +321,11 @@ $(document).ready(function () {
     colony = new Colony();
 
     // display simulation information
-    $('obstacles').value = 'toto';
+    $('#nbObstacles').text(obstacles.length);
+    $('#nbFoodReserves').text(foodReserves.length);
+    $('#nbAnts').text(ants.length);
 
-    return window.setInterval(draw, 10);
+    return window.setInterval(draw, MSInterval);
   }
   /*
   function rect(x,y,w,h) {
